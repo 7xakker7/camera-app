@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Camera App</title>
-    <!-- Подключаем стили и скрипты MediaPipe Hands -->
+    <title>Telegram Camera App - Ultra Lite</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <style>
@@ -36,7 +35,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* Зеркальное отображение камеры */
+            transform: scaleX(-1);
         }
         .ui-layer {
             position: absolute;
@@ -56,17 +55,15 @@
             font-weight: bold;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        button:active {
-            transform: scale(0.95);
-        }
         #status {
             position: absolute;
             bottom: 30px;
             z-index: 10;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             padding: 10px 20px;
             border-radius: 20px;
             font-size: 14px;
+            border: 1px solid rgba(255,255,255,0.2);
         }
     </style>
 </head>
@@ -93,7 +90,6 @@
     let camera = null;
 
     function onResults(results) {
-        // Установка размеров холста под видео
         canvasElement.width = videoElement.videoWidth;
         canvasElement.height = videoElement.videoHeight;
 
@@ -101,29 +97,27 @@
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
         canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-        // Если найдены руки — рисуем скелет
         if (results.multiHandLandmarks) {
             for (const landmarks of results.multiHandLandmarks) {
-                drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 3});
-                drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 3});
+                drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+                drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 2});
             }
-            statusDiv.innerText = `Рук обнаружено: ${results.multiHandLandmarks.length}`;
+            statusDiv.innerText = `📦 Разрешение: ${videoElement.videoWidth}x${videoElement.videoHeight} | Рук: ${results.multiHandLandmarks.length}`;
         } else {
-            statusDiv.innerText = "Ищем руки в кадре...";
+            statusDiv.innerText = `📦 Разрешение: ${videoElement.videoWidth}x${videoElement.videoHeight} | Ищем руки...`;
         }
         canvasCtx.restore();
     }
 
-    // Инициализация нейросети MediaPipe Hands
     const hands = new Hands({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
 
     hands.setOptions({
-        maxNumHands: 2,
-        modelComplexity: 0, // 0 — быстрая модель (убирает лаги на телефонах)
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.6
+        maxNumHands: 1, // Ограничение: ищем только 1 руку для максимальной скорости
+        modelComplexity: 0, // Самая легкая модель
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
     });
 
     hands.onResults(onResults);
@@ -133,27 +127,25 @@
             startBtn.style.display = 'none';
             statusDiv.innerText = "Запуск камеры...";
 
-            // Настройка для стабильной работы на мобильных устройствах
+            // МИНИМАЛЬНОЕ РАЗРЕШЕНИЕ ДЛЯ УСТРАНЕНИЯ ЛАГОВ
             camera = new Camera(videoElement, {
                 onFrame: async () => {
                     await hands.send({ image: videoElement });
                 },
-                width: 640,
-                height: 480
+                width: 160,
+                height: 120
             });
 
             await camera.start();
-            statusDiv.innerText = "Камера работает!";
         } catch (error) {
             console.error(error);
-            alert("Не удалось получить доступ к камере. Убедитесь, что страница открыта через HTTPS.");
+            alert("Не удалось запустить камеру.");
             startBtn.style.display = 'block';
-            statusDiv.innerText = "Ошибка доступа к камере";
+            statusDiv.innerText = "Ошибка доступа";
         }
     });
 </script>
 
-<!-- Дополнительные скрипты для отрисовки скелета рук -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 
 </body>
