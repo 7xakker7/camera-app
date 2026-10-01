@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Аня — Telegram Gestures Portfolio</title>
+    <title>Telegram Camera App - Ultra Lite</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <style>
         body {
             margin: 0;
@@ -46,7 +45,7 @@
             gap: 10px;
         }
         button {
-            background: #ff2ea6;
+            background: #2ea6ff;
             color: white;
             border: none;
             padding: 12px 24px;
@@ -72,13 +71,13 @@
 
 <div class="container">
     <div class="ui-layer">
-        <button id="startBtn">Запустить Аню (Gestures)</button>
+        <button id="startBtn">Включить камеру</button>
     </div>
     
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output_canvas"></canvas>
     
-    <div id="status">Бот «Аня» ожидает запуск камеры...</div>
+    <div id="status">Камера отключена</div>
 </div>
 
 <script>
@@ -100,12 +99,12 @@
 
         if (results.multiHandLandmarks) {
             for (const landmarks of results.multiHandLandmarks) {
-                drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#ff2ea6', lineWidth: 3});
-                drawLandmarks(canvasCtx, landmarks, {color: '#ffffff', lineWidth: 1, radius: 3});
+                drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+                drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 2});
             }
-            statusDiv.innerText = `✨ Аня: Рук найдено: ${results.multiHandLandmarks.length}`;
+            statusDiv.innerText = `📦 Разрешение: ${videoElement.videoWidth}x${videoElement.videoHeight} | Рук: ${results.multiHandLandmarks.length}`;
         } else {
-            statusDiv.innerText = `✨ Аня: Ищем жесты...`;
+            statusDiv.innerText = `📦 Разрешение: ${videoElement.videoWidth}x${videoElement.videoHeight} | Ищем руки...`;
         }
         canvasCtx.restore();
     }
@@ -115,10 +114,10 @@
     });
 
     hands.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.6
+        maxNumHands: 1, // Ограничение: ищем только 1 руку для максимальной скорости
+        modelComplexity: 0, // Самая легкая модель
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
     });
 
     hands.onResults(onResults);
@@ -126,25 +125,28 @@
     startBtn.addEventListener('click', async () => {
         try {
             startBtn.style.display = 'none';
-            statusDiv.innerText = "Инициализация камеры Ани...";
+            statusDiv.innerText = "Запуск камеры...";
 
+            // МИНИМАЛЬНОЕ РАЗРЕШЕНИЕ ДЛЯ УСТРАНЕНИЯ ЛАГОВ
             camera = new Camera(videoElement, {
                 onFrame: async () => {
                     await hands.send({ image: videoElement });
                 },
-                width: 640,
-                height: 480
+                width: 160,
+                height: 120
             });
 
             await camera.start();
         } catch (error) {
             console.error(error);
-            alert("Ошибка доступа к камере.");
+            alert("Не удалось запустить камеру.");
             startBtn.style.display = 'block';
-            statusDiv.innerText = "Ошибка запуска";
+            statusDiv.innerText = "Ошибка доступа";
         }
     });
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 
 </body>
 </html>
